@@ -1,0 +1,89 @@
+
+# coding: utf-8
+
+# KICKOFF
+# 
+# PROJECT 77: Corey Blitzer and Alvin Shin
+
+# In[11]:
+
+
+import base64
+import requests
+import pandas as pd
+
+
+def send_request(city, name):
+    # Request
+
+    try:
+        response = requests.get(
+            url='https://api.mysportsfeeds.com/v1.0/pull/nfl/2018-regular/full_game_schedule.json',
+            params={
+                "team": "%s-%s" % (city, team),
+                'date': 'since-yesterday'
+            },
+            headers={
+                "Authorization": "Basic " + base64.b64encode('{}:{}'.format('d8571ffb-4154-48c3-ad76-6572e6','Daniel1025').encode('utf-8')).decode('ascii')
+            }
+        )
+        
+        sched=response.json()
+        week=sched['fullgameschedule']['gameentry'][0:]
+        
+        for item in week:
+            awayteamname = (str(item['awayTeam']['City'])+' '+ str(item['awayTeam']['Name']))
+            item['away'] = awayteamname
+            hometeamname = (str(item['homeTeam']['City'])+' '+ str(item['homeTeam']['Name']))
+            item['home'] = hometeamname
+            
+        
+        
+        week_df = pd.DataFrame(week)
+        week_df = pd.DataFrame(week_df[['date', 'time', 'location', 'home', 'away']])
+        return week_df
+    
+    except KeyError:
+        print('Please enter a valid NFL Team name and city!')
+    
+
+
+
+# In[11]:
+
+
+city = input("Enter team's city: ")
+city = city.replace(' ','')
+team = input("Enter a team name: ")
+
+while True:
+    try:
+        from weather import Weather, Unit
+        weather = Weather(unit=Unit.FAHRENHEIT)
+        location = weather.lookup_by_location('Syracuse')
+        lookup = weather.lookup(560743)
+        condition = lookup.condition
+        weather = Weather(unit=Unit.FAHRENHEIT)
+
+        location = weather.lookup_by_location(city)
+        forecasts = location.forecast
+        for forecast in forecasts:
+
+            print("The date is:", forecast.date)
+            print("The forecast for this date is:", forecast.text)
+            print("The high will be:", forecast.high)
+            print("The low will be:", forecast.low)
+            print(" ")
+        print("Weather is available for games within 10 days")
+        print(" ")
+        break
+        
+    except AttributeError:
+        print('Please enter a valid NFL Team name and city!')
+        
+    break
+
+
+
+send_request(city, team)
+
